@@ -61,13 +61,12 @@ pipeline=Pipeline(stages=[assembler, regression])
 pipelineFit= pipeline.fit(trainingset)
 updated_trainingset = pipelineFit.transform(trainingset)
 updated_trainingset.show()
-print("********************* \n PipelineFit\n")
 
+print("********************* \n PipelineFit\n")
 
 elastic_host="10.0.100.51"
 elastic_index="luad"
 elastic_document="_doc"
-
 
 #mapping for elasticSearch
 es_mapping = {
@@ -80,9 +79,16 @@ es_mapping = {
     }
 }
 
+def get_spark_session():
+    sparkConf= SparkConf() \
+                .set("es.nodes", elastic_host) \
+                .set("es.port", "9200") \
+                .set("spark.app.name", "luadAnalysis") \
+                .set("spark.scheduler.mode", "FAIR")
+    sc = SparkContext.getOrCreate(conf=sparkConf)
+
 
 print("************************ \n Es mapping and connection\n")
-
 
 #Processing data
 kafkaServer="10.0.100.23:9092"
@@ -103,7 +109,6 @@ dataKafka = tp.StructType([
     tp.StructField(name= '@timestamp', dataType= tp.StringType(),  nullable= True)
 ])
 
-
 print("************************ \n dataKafka\n")
 
 def elaborate(batch_df: DataFrame, batch_id: int):
@@ -115,7 +120,7 @@ def elaborate(batch_df: DataFrame, batch_id: int):
         data2.show()
 
         print("************************ \nSend to ES \n")
-        data2.select("id", "@timestamp") \
+        data2.select("id", "@timestamp", "year_of_diagnosis", "years_smoked", "pack_years_smoked", "age_at_index", "year_of_birth", "year_of_death") \
         .write \
         .format("org.elasticsearch.spark.sql") \
         .mode('append') \
