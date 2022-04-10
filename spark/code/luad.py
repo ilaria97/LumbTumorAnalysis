@@ -37,8 +37,7 @@ file="/opt/tap/spark/dataset/luad_clinical.csv"
 print("***************** \n Inizio\n")
 
 schema= tp.StructType([
-    tp.StructField(name= 'id', dataType=tp.IntegerType(), nullable=True),    
-    #tp.StructField(name= 'tumor_location', dataType= tp.StringType(),  nullable= True),
+    tp.StructField(name= 'id', dataType=tp.IntegerType(), nullable=True),
     tp.StructField(name= 'pathology_report_uuid', dataType= tp.DoubleType(),  nullable= True),
     tp.StructField(name= 'year_of_diagnosis', dataType= tp.DoubleType(),  nullable= True),
     tp.StructField(name= 'years_smoked', dataType= tp.DoubleType(),  nullable= True),
@@ -97,8 +96,7 @@ topic = "luad"
 conf = SparkConf(loadDefaults=False)
 
 dataKafka = tp.StructType([
-    tp.StructField(name= 'id', dataType=tp.IntegerType(), nullable=True),    
-    #tp.StructField(name= 'tumor_location', dataType= tp.StringType(),  nullable= True),
+    tp.StructField(name= 'id', dataType=tp.IntegerType(), nullable=True),
     tp.StructField(name= 'pathology_report_uuid', dataType= tp.DoubleType(),  nullable= True),
     tp.StructField(name= 'year_of_diagnosis', dataType= tp.DoubleType(),  nullable= True),
     tp.StructField(name= 'years_smoked', dataType= tp.DoubleType(),  nullable= True),
@@ -106,6 +104,7 @@ dataKafka = tp.StructType([
     tp.StructField(name= 'age_at_index', dataType= tp.DoubleType(),  nullable= True),
     tp.StructField(name= 'year_of_birth', dataType= tp.DoubleType(),  nullable= True),
     tp.StructField(name= 'year_of_death', dataType= tp.DoubleType(),  nullable= True),
+    tp.StructField(name= 'label', dataType= tp.DoubleType(),  nullable= True),
     tp.StructField(name= '@timestamp', dataType= tp.StringType(),  nullable= True)
 ])
 
@@ -118,9 +117,10 @@ def elaborate(batch_df: DataFrame, batch_id: int):
         batch_df.show()                
         data2=pipelineFit.transform(batch_df)
         data2.show()
+        data2.summary()
 
         print("************************ \nSend to ES \n")
-        data2.select("id", "@timestamp", "year_of_diagnosis", "years_smoked", "pack_years_smoked", "age_at_index", "year_of_birth", "year_of_death") \
+        data2.select("id", "@timestamp", "year_of_diagnosis", "years_smoked", "pack_years_smoked", "age_at_index", "year_of_birth", "year_of_death", "prediction", "label") \
         .write \
         .format("org.elasticsearch.spark.sql") \
         .mode('append') \
